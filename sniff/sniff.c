@@ -251,11 +251,12 @@ char *tcp_parser(tcp *tcph, char *ptr)
     ptr += 2;
     memcpy(&tcph->urgptr, ptr, 2);
     ptr += 2;
+    
 
     return ptr;
 }
 
-void print_tcp(tcp *tcp)
+char* print_tcp(tcp *tcp,char* ptr)
 {
 
     uint16_t flags_all = ntohs(tcp->flag);
@@ -268,6 +269,7 @@ void print_tcp(tcp *tcp)
     printf("-->:%u", ntohs(tcp->des));
     printf(" SEQNO:%u", ntohl(tcp->seqno));
     printf(" ACKNO:%u", ntohl(tcp->ackno));
+    //printf(" doff:%u",tcp->doff);
     if (flags_only & 0x20)
     {
         tcp->urg = 1;
@@ -306,6 +308,14 @@ void print_tcp(tcp *tcp)
     printf(" WINSIZE:%u", ntohs(tcp->winsize));
     printf(" CHECK:%u", ntohs(tcp->check));
     printf(" URGPTR:%u \n", ntohl(tcp->urgptr));
+    if(tcp->doff>5){
+        int n = tcp->doff -5;
+        //printf("n:%d",n);
+        ptr+=n*4;
+
+    }
+    return ptr;
+    
 }
 
 char *udp_parse(udp *udp, char *ptr)
@@ -355,3 +365,27 @@ void print_icmp(icmp_hdr *icmp)
            icmp->message[0], icmp->message[1],
            icmp->message[2], icmp->message[3]);
     }
+
+int check_proto(tcp* tcp){
+    if(ntohs(tcp->src)==443|| ntohs(tcp->des)==443){
+        return 1;
+    }
+    return 0;
+}
+
+char* tls_record_hdr_parse(tls_record_header* tls,char* ptr){
+    memcpy(&tls->content_type,ptr,1);
+    ++ptr;
+    memcpy(&tls->version,ptr,2);
+    ptr+=2;
+    memcpy(&tls->len,ptr,2);
+    ptr+=2;
+    return ptr;
+}
+
+void print_tls_record_hdr(tls_record_header* tls){
+    printf("TLS_RCD |");
+    printf(" type:%u",tls->content_type);
+    printf(" ver:%u",ntohs(tls->version));
+    printf(" len:%u \n",ntohs(tls->len));
+}

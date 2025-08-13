@@ -23,10 +23,8 @@ typedef struct
     uint32_t tpa;          /* Target IP address */
 } arp_hdr;
 
-char* arp_parse(arp_hdr* arp,char* ptr);
-void print_arp(arp_hdr* arp);
-
-
+char *arp_parse(arp_hdr *arp, char *ptr);
+void print_arp(arp_hdr *arp);
 
 typedef struct
 {
@@ -115,7 +113,9 @@ typedef struct
 } tcp;
 
 char *tcp_parser(tcp *tcph, char *ptr);
-void print_tcp(tcp *tcp);
+char* print_tcp(tcp *tcp,char* ptr);
+
+int check_proto(tcp* tcp);
 
 typedef struct
 {
@@ -158,5 +158,37 @@ typedef struct
 
 char *icmp_parse(icmp_hdr *icmp, char *ptr);
 void print_icmp(icmp_hdr *icmp);
+
+typedef enum
+{
+    HELLO_REQUEST = 0,
+    CLIENT_HELLO = 1,
+    SERVER_HELLO = 2,
+    CERTIFICATE = 11,
+    SERVER_KEY_EXCHANGE = 12,
+    CERTIFICATE_REQUEST = 13,
+    SERVER_HELLO_DONE = 14,
+    CERTIFICATE_VERIFY = 15,
+    CLIENT_KEY_EXCHANGE = 16,
+    FINISHED = 20
+} HandshakeType;
+
+typedef struct{
+    uint8_t content_type;
+    u_int16_t version;
+    uint16_t len;
+    
+
+} tls_record_header;
+
+char* tls_record_hdr_parse(tls_record_header* tls,char*);
+void print_tls_record_hdr(tls_record_header* tls);
+
+typedef struct
+{
+    HandshakeType msg_type;
+    uint8_t  length[3];
+
+} tls_handshake;
 
 #endif
