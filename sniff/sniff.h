@@ -113,7 +113,7 @@ typedef struct
 } tcp;
 
 char *tcp_parser(tcp *tcph, char *ptr);
-char* print_tcp(tcp *tcp,char* ptr);
+char* print_tcp(tcp *tcp);
 
 int check_proto(tcp* tcp);
 
@@ -159,6 +159,18 @@ typedef struct
 char *icmp_parse(icmp_hdr *icmp, char *ptr);
 void print_icmp(icmp_hdr *icmp);
 
+
+typedef struct{
+    uint8_t content_type;
+    u_int16_t version;
+    uint16_t len;
+    
+
+} tls_record_header;
+
+char* tls_record_hdr_parse(tls_record_header* tls,char*);
+void print_tls_record_hdr(tls_record_header* tls);
+
 typedef enum
 {
     HELLO_REQUEST = 0,
@@ -173,22 +185,16 @@ typedef enum
     FINISHED = 20
 } HandshakeType;
 
-typedef struct{
-    uint8_t content_type;
-    u_int16_t version;
-    uint16_t len;
-    
-
-} tls_record_header;
-
-char* tls_record_hdr_parse(tls_record_header* tls,char*);
-void print_tls_record_hdr(tls_record_header* tls);
 
 typedef struct
 {
-    HandshakeType msg_type;
+    u_int8_t msg_type;
     uint8_t  length[3];
 
 } tls_handshake;
+
+char* tls_record_frag_parse(tls_handshake* tls,char* ptr);
+
+void print_tls_record_frag(tls_handshake* tls);
 
 #endif

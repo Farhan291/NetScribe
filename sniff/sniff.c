@@ -49,34 +49,37 @@ int check_ipver(ether *eth)
     {
         return 2;
     }
-    else if(ntohs(eth->eth_type)==0x0806){
+    else if (ntohs(eth->eth_type) == 0x0806)
+    {
         return 3;
     }
     return 0;
 }
 
-char* arp_parse(arp_hdr* arp,char* ptr){          
-    memcpy(&arp->htype,ptr,2);
-    ptr+=2;
-    memcpy(&arp->ptype,ptr,2);
-    ptr+=2;
-    memcpy(&arp->hlen,ptr,1);
+char *arp_parse(arp_hdr *arp, char *ptr)
+{
+    memcpy(&arp->htype, ptr, 2);
+    ptr += 2;
+    memcpy(&arp->ptype, ptr, 2);
+    ptr += 2;
+    memcpy(&arp->hlen, ptr, 1);
     ++ptr;
-    memcpy(&arp->plen,ptr,1);
+    memcpy(&arp->plen, ptr, 1);
     ++ptr;
-    memcpy(&arp->op,ptr,2);
-    ptr+=2;
-    memcpy(&arp->sha,ptr,6);
-    ptr+=6;
-    memcpy(&arp->spa,ptr,4);
-    ptr+=4;
-    memcpy(&arp->tha,ptr,6);
-    ptr+=6;
-    memcpy(&arp->tpa,ptr,4);
-    ptr+=4;
+    memcpy(&arp->op, ptr, 2);
+    ptr += 2;
+    memcpy(&arp->sha, ptr, 6);
+    ptr += 6;
+    memcpy(&arp->spa, ptr, 4);
+    ptr += 4;
+    memcpy(&arp->tha, ptr, 6);
+    ptr += 6;
+    memcpy(&arp->tpa, ptr, 4);
+    ptr += 4;
 }
 
-void print_arp(arp_hdr* arp){
+void print_arp(arp_hdr *arp)
+{
     /*
   0                   1                   2                   3
   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -118,7 +121,6 @@ void print_arp(arp_hdr* arp){
            arp->tha[0], arp->tha[1], arp->tha[2],
            arp->tha[3], arp->tha[4], arp->tha[5]);
     printf("     Target IP: %s\n", inet_ntoa(tpa_addr));
-
 }
 
 char *ip4_parse(char *buff, ip4_hdr *ip, char *ptr)
@@ -235,6 +237,7 @@ int transport_layer_checker6(ip6_hdr *ip)
 
 char *tcp_parser(tcp *tcph, char *ptr)
 {
+    char *temp = ptr;
     memcpy(&tcph->src, ptr, 2);
     ptr += 2;
     memcpy(&tcph->des, ptr, 2);
@@ -251,12 +254,21 @@ char *tcp_parser(tcp *tcph, char *ptr)
     ptr += 2;
     memcpy(&tcph->urgptr, ptr, 2);
     ptr += 2;
-    
+
+    uint16_t flags_word = ntohs(tcph->flag);
+    unsigned int data_offset_in_words = (flags_word >> 12);
+    unsigned int tcp_header_length_in_bytes = data_offset_in_words * 4;
+    if (tcp_header_length_in_bytes < 20)
+    {
+        fprintf(stderr, "Invalid TCP header length: %u bytes\n", tcp_header_length_in_bytes);
+        return NULL; // Return NULL to signal a parsing error
+    }
+    ptr= temp+tcp_header_length_in_bytes;
 
     return ptr;
 }
 
-char* print_tcp(tcp *tcp,char* ptr)
+char *print_tcp(tcp *tcp)
 {
 
     uint16_t flags_all = ntohs(tcp->flag);
@@ -269,7 +281,7 @@ char* print_tcp(tcp *tcp,char* ptr)
     printf("-->:%u", ntohs(tcp->des));
     printf(" SEQNO:%u", ntohl(tcp->seqno));
     printf(" ACKNO:%u", ntohl(tcp->ackno));
-    //printf(" doff:%u",tcp->doff);
+    printf(" doff:%u",tcp->doff);
     if (flags_only & 0x20)
     {
         tcp->urg = 1;
@@ -307,14 +319,7 @@ char* print_tcp(tcp *tcp,char* ptr)
     printf("(0x%04x)", flags_only);
     printf(" WINSIZE:%u", ntohs(tcp->winsize));
     printf(" CHECK:%u", ntohs(tcp->check));
-    printf(" URGPTR:%u \n", ntohl(tcp->urgptr));
-    if(tcp->doff>5){
-        int n = tcp->doff -5;
-        //printf("n:%d",n);
-        ptr+=n*4;
-
-    }
-    return ptr;
+    printf(" URGPTR:%u \n", ntohs(tcp->urgptr));
     
 }
 
@@ -364,28 +369,72 @@ void print_icmp(icmp_hdr *icmp)
     printf("body: %02x %02x %02x %02x\n",
            icmp->message[0], icmp->message[1],
            icmp->message[2], icmp->message[3]);
-    }
+}
 
-int check_proto(tcp* tcp){
-    if(ntohs(tcp->src)==443|| ntohs(tcp->des)==443){
+int check_proto(tcp *tcp)
+{
+    if (ntohs(tcp->src) == 443 || ntohs(tcp->des) == 443)
+    {
         return 1;
     }
     return 0;
 }
 
-char* tls_record_hdr_parse(tls_record_header* tls,char* ptr){
-    memcpy(&tls->content_type,ptr,1);
+char *tls_record_hdr_parse(tls_record_header *tls, char *ptr)
+{
+    memcpy(&tls->content_type, ptr, 1);
     ++ptr;
-    memcpy(&tls->version,ptr,2);
-    ptr+=2;
-    memcpy(&tls->len,ptr,2);
-    ptr+=2;
+    memcpy(&tls->version, ptr, 2);
+    ptr += 2;
+    memcpy(&tls->len, ptr, 2);
+    ptr += 2;
     return ptr;
 }
 
-void print_tls_record_hdr(tls_record_header* tls){
+void print_tls_record_hdr(tls_record_header *tls)
+{
     printf("TLS_RCD |");
-    printf(" type:%u",tls->content_type);
-    printf(" ver:%u",ntohs(tls->version));
-    printf(" len:%u \n",ntohs(tls->len));
+    printf(" type:%u", tls->content_type);
+    printf(" ver:%u", ntohs(tls->version));
+    printf(" len:%u \n", ntohs(tls->len));
+}
+
+char *tls_record_frag_parse(tls_handshake *tls, char *ptr)
+{  
+    memcpy(&tls->msg_type, ptr, 1);
+    ++ptr;
+    memcpy(&tls->length, ptr, 3);
+    ptr += 3;
+    return ptr;
+}
+
+void print_tls_record_frag(tls_handshake *tls)
+{
+    printf("HDSH |");
+    printf("  Type:%d", tls->msg_type);
+    switch (tls->msg_type)
+    {
+    case CLIENT_HELLO:
+        printf("(Client Hello)");
+        break;
+    case SERVER_HELLO:
+        printf("(Server Hello)");
+        break;
+    case CERTIFICATE:
+        printf("(Certificate)\n");
+        break;
+    case SERVER_KEY_EXCHANGE:
+        printf("(Server Key Exchange)");
+        break;
+    case FINISHED:
+        printf("(Finished)");
+        break;
+    default:
+        printf("(Unknown)");
+        break;
+    }
+    uint32_t len = (tls->length[0] << 16) |
+                   (tls->length[1] << 8) |
+                   tls->length[2];
+    printf("len:%u\n", len);
 }
