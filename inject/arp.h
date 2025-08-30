@@ -17,4 +17,6 @@ struct arp_header {
     unsigned char des_ip[4];
 } __attribute__((packed));
 
+void create_arp(unsigned char* desmac, unsigned char* target_ip);
+
 #endif

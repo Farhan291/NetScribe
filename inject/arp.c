@@ -12,13 +12,13 @@
 #include "src_ip.h"
 #include "arp.h"
 
-void create_arp()
+void create_arp(unsigned char* desmac, unsigned char* target_ip)
 {
 
     unsigned char my_ip[4];
     unsigned char interface[IFNAMSIZ];
     unsigned char my_mac_address[6];
-    unsigned char target_ip[4] = {192, 168, 1, 1};
+    //unsigned char target_ip[4] = {192, 168, 1, 1};
     int successs = srcmac_addr(my_mac_address, interface);
     get_srcip(my_ip);
     int sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
@@ -73,11 +73,13 @@ void create_arp()
 
         struct arp_header *rarp = (struct arp_header *)(recv_buf + 14); 
 
+        memcpy(desmac,&rarp->src_mac,6);
+
         if (ntohs(rarp->opcode) == 2 && memcmp(rarp->src_ip, target_ip, 4) == 0) {
             printf("Got ARP reply: %d.%d.%d.%d is at %02x:%02x:%02x:%02x:%02x:%02x\n",
                    rarp->src_ip[0], rarp->src_ip[1], rarp->src_ip[2], rarp->src_ip[3],
-                   rarp->src_mac[0], rarp->src_mac[1], rarp->src_mac[2],
-                   rarp->src_mac[3], rarp->src_mac[4], rarp->src_mac[5]);
+                   desmac[0], desmac[1], desmac[2],
+                   desmac[3], desmac[4], desmac[5]);
             break;
         }
     }
@@ -85,7 +87,3 @@ void create_arp()
     close(sock);
 }
 
-int main(){
-    create_arp();
-    return 0;
-}
