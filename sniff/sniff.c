@@ -1,7 +1,6 @@
 #include "sniff.h"
 #include <arpa/inet.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 char *ptr;
@@ -65,6 +64,7 @@ char *arp_parse(arp_hdr *arp, char *ptr) {
   ptr += 6;
   memcpy(&arp->tpa, ptr, 4);
   ptr += 4;
+  return ptr;
 }
 
 void print_arp(arp_hdr *arp) {
@@ -176,15 +176,16 @@ void print_ip6(ip6_hdr *ip6) {
   ip6->next_header = (full_head >> 8) & 0xFF;
   ip6->hop_limit = full_head & 0xFF;
 
-  printf("IP6     |");
-  printf("%u", ip6->src);
-  printf("-->%u", ip6->des);
-  printf(" ver:%u", ip6->version);
-  printf(" traffclas:%u", ip6->traffic_class);
-  printf(" flowlb:%u", ip6->flow_label);
-  printf(" payloadlen:%u", ip6->payload_len);
-  printf(" nexhead:%u", ip6->next_header);
-  printf(" hoplim:%u\n", ip6->hop_limit);
+  char src_str[INET6_ADDRSTRLEN];
+  char des_str[INET6_ADDRSTRLEN];
+  inet_ntop(AF_INET6, &ip6->src, src_str, sizeof(src_str));
+  inet_ntop(AF_INET6, &ip6->des, des_str, sizeof(des_str));
+
+  printf("IP6     | %s --> %s\n", src_str, des_str);
+  printf("        | VERSION:%u TRAFFCLASS:%u FLOW_LABEL:%u PAYLOAD_LEN:%u "
+         "NEXT_HDR:%u HOP_LIMIT:%u\n",
+         ip6->version, ip6->traffic_class, ip6->flow_label, ip6->payload_len,
+         ip6->next_header, ip6->hop_limit);
 }
 
 int transport_layer_checker4(ip4_hdr *ip) {
@@ -238,7 +239,7 @@ char *tcp_parser(tcp *tcph, char *ptr) {
   return ptr;
 }
 
-char *print_tcp(tcp *tcp) {
+void print_tcp(tcp *tcp) {
 
   uint16_t flags_all = ntohs(tcp->flag);
   tcp->doff = (flags_all >> 12);

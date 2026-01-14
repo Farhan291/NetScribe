@@ -103,7 +103,7 @@ typedef struct {
 } tcp;
 
 char *tcp_parser(tcp *tcph, char *ptr);
-char *print_tcp(tcp *tcp);
+void print_tcp(tcp *tcp);
 
 int check_proto(tcp *tcp);
 

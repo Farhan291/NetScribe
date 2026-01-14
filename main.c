@@ -21,7 +21,6 @@ typedef enum { IP_UNKNOWN = 0, IP_V4, IP_V6, ARP } ip_version_t;
 int main(void) {
 
   int rs = create_socket();
-  printf("%d", rs);
   if (rs < 0) {
     return 1;
   }
