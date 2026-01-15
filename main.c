@@ -4,10 +4,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include "server/server.h"
 #include "sniff/sniff.h"
 #define BUFFER 4048
+#define FLAG_TCP (1 << 0)
+#define FLAG_UDP (1 << 1)
+#define FLAG_ICMP (1 << 2)
+#define FLAG_ARP (1 << 3)
+
+int proto_flags = 0;
+int opt;
 
 typedef enum {
   PROTOCOL_UNKNOWN = 0,
@@ -18,7 +26,28 @@ typedef enum {
 
 typedef enum { IP_UNKNOWN = 0, IP_V4, IP_V6, ARP } ip_version_t;
 
-int main(void) {
+int main(int argc, char **argv) {
+  while ((opt = getopt(argc, argv, "tuia")) != -1) {
+    switch (opt) {
+    case 't':
+      proto_flags |= FLAG_TCP;
+      break;
+    case 'u':
+      proto_flags |= FLAG_UDP;
+      break;
+    case 'i':
+      proto_flags |= FLAG_ICMP;
+      break;
+    case 'a':
+      proto_flags |= FLAG_ARP;
+      break;
+    default:
+      fprintf(stderr, "Usage: %s [-t] [-u] [-i] [-a]\n", argv[0]);
+      return 1;
+    }
+  }
+  if (proto_flags == 0)
+    proto_flags = FLAG_TCP | FLAG_UDP | FLAG_ICMP;
 
   int rs = create_socket();
   if (rs < 0) {
@@ -39,18 +68,23 @@ int main(void) {
       continue;
     }
     ether eth;
+    ip4_hdr ip4;
+    ip6_hdr ip6;
+    arp_hdr arp;
     ptr = etherparse(buffer, &eth);
-    print_ether(&eth);
 
     int check_ip = check_ipver(&eth);
+
+    if ((proto_flags & FLAG_ARP) &&
+        !(proto_flags & (FLAG_TCP | FLAG_UDP | FLAG_ICMP)) && check_ip != ARP) {
+      continue;
+    }
     int check_protocol = 0;
     int check_port = 0;
 
     switch (check_ip) {
     case IP_V4: {
-      ip4_hdr ip4;
       ptr = ip4_parse(buffer, &ip4, ptr);
-      print_ip4(&ip4);
       int ip_total_len = ntohs(ip4.length);
       int ip_hdr_len = (ip4.ver_ihl & 0x0F) * 4;
       tcp_payload_len = ip_total_len - ip_hdr_len;
@@ -58,20 +92,40 @@ int main(void) {
       break;
     }
     case IP_V6: {
-      ip6_hdr ip6;
       ptr = ip6_parse(&ip6, ptr);
-      print_ip6(&ip6);
       tcp_payload_len = ip6.payload_len;
       check_protocol = transport_layer_checker6(&ip6);
       break;
     }
     case ARP: {
-      arp_hdr arp;
+      if (!(proto_flags & FLAG_ARP))
+        continue;
       ptr = arp_parse(&arp, ptr);
-      print_arp(&arp);
+      check_protocol = PROTOCOL_UNKNOWN;
       break;
     }
     default:
+      break;
+    }
+    if (check_protocol == PROTOCOL_TCP && !(proto_flags & FLAG_TCP))
+      continue;
+
+    if (check_protocol == PROTOCOL_UDP && !(proto_flags & FLAG_UDP))
+      continue;
+
+    if (check_protocol == PROTOCOL_ICMP && !(proto_flags & FLAG_ICMP))
+      continue;
+
+    print_ether(&eth);
+    switch (check_ip) {
+    case IP_V4:
+      print_ip4(&ip4);
+      break;
+    case IP_V6:
+      print_ip6(&ip6);
+      break;
+    case ARP:
+      print_arp(&arp);
       break;
     }
     switch (check_protocol) {
