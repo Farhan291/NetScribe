@@ -140,7 +140,7 @@ void print_ip4(ip4_hdr *iph) {
   unsigned char version = iph->ver_ihl >> 4;
   unsigned char ihl = iph->ver_ihl & 0x0F;
 
-  printf("IP      | ");
+  printf("IP4     | ");
   print_ip4addr(iph->src);
   printf(" --> ");
   print_ip4addr(iph->dst);
@@ -321,11 +321,11 @@ void print_icmp(icmp_hdr *icmp) {
   icmp->code = (full_header >> 16) & 0xFF;
   icmp->check = full_header & 0xFFFF;
 
-  printf("ICMP     |");
-  printf("type:%u", icmp->type);
-  printf("code:%u", icmp->code);
-  printf("check:%u", ntohs(icmp->check));
-  printf("body: %02x %02x %02x %02x\n", icmp->message[0], icmp->message[1],
+  printf("ICMP    |");
+  printf(" type:%u", icmp->type);
+  printf(" code:%u", icmp->code);
+  printf(" check:%u", ntohs(icmp->check));
+  printf(" body: %02x %02x %02x %02x\n", icmp->message[0], icmp->message[1],
          icmp->message[2], icmp->message[3]);
 }
 
