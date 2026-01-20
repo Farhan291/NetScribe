@@ -1,6 +1,7 @@
 #include "arp.h"
 #include "eth.h"
 #include "fileio.h"
+#include "ip.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -73,6 +74,14 @@ int inject_main(int argc, char **argv) {
     char *dst_ip = argv[optind];
     unsigned char desmac[6];
     create_arp(desmac, dst_ip);
+  }
+  if (layer_flag & IP_FLAG) {
+    if (optind >= argc) {
+      printf("Usage: netscribe -i <dest-ip> \n");
+      return 1;
+    }
+    char *dst_ip = argv[optind];
+    create_ip(dst_ip);
   }
   return 0;
 }
