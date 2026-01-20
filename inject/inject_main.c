@@ -1,3 +1,4 @@
+#include "arp.h"
 #include "eth.h"
 #include "fileio.h"
 #include <stdint.h>
@@ -63,6 +64,15 @@ int inject_main(int argc, char **argv) {
     }
 
     eth_create(des_mac, text, payload_len, g_ethertype);
+  }
+  if (layer_flag & ARP_FLAG) {
+    if (optind >= argc) {
+      printf("Usage: netscribe -a  <dest-ip> \n");
+      return 1;
+    }
+    char *dst_ip = argv[optind];
+    unsigned char desmac[6];
+    create_arp(desmac, dst_ip);
   }
   return 0;
 }
