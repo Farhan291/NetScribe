@@ -142,5 +142,10 @@ void create_udp(unsigned char *des, char *text, ssize_t len, int srcp,
   memcpy(dest.sll_addr, desmac, 6);
   ssize_t sent_bytes = sendto(sd, buffer, sizeof(buffer), 0,
                               (struct sockaddr *)&dest, sizeof(dest));
+  if (sent_bytes < 0) {
+    perror("sendto()");
+    close(sd);
+    return;
+  }
   close(sd);
 }

@@ -20,6 +20,10 @@ void eth_create(unsigned char *des, char *text, ssize_t len, uint16_t ethtype) {
   unsigned char *ptr = ethhdr;
   struct sockaddr_ll des_addr;
   int su = srcmac_addr(my_mac_address, interface);
+  if (su == -1) {
+    perror("srcmac_addr()");
+    return;
+  }
   memset(&des_addr, 0, sizeof(des_addr));
   des_addr.sll_family = AF_PACKET;
   des_addr.sll_ifindex = if_nametoindex(interface);
@@ -40,6 +44,21 @@ void eth_create(unsigned char *des, char *text, ssize_t len, uint16_t ethtype) {
   ptr += len;
   ssize_t sent_bytes = sendto(sd, ethhdr, 14 + len, 0,
                               (struct sockaddr *)&des_addr, sizeof(des_addr));
+  if (sent_bytes < 0) {
+    perror("sendto()");
+    close(sd);
+    return;
+  }
+  printf("ethnert inject: \n ");
+  printf(" srcmac_addr: %02x:%02x:%02x:%02x:%02x:%02x\n", my_mac_address[0],
+         my_mac_address[1], my_mac_address[2], my_mac_address[3],
+         my_mac_address[4], my_mac_address[5]);
+
+  printf("  destmac_addr: %02x:%02x:%02x:%02x:%02x:%02x\n", des[0], des[1],
+         des[2], des[3], des[4], des[5]);
+
+  printf("  ethernetType: 0x%04x\n", ethtype);
+  printf("  Payload: %zd", len);
 }
 
 int parse_mac(char *str, unsigned char *mac) {

@@ -35,6 +35,10 @@ void create_ip(char *des_ip) {
   }
 
   int success = srcmac_addr(my_mac_address, interface);
+  if (success == -1) {
+    perror("srcmac_addr()");
+    return;
+  }
   get_srcip(my_ip);
   create_arp(desmac_addr, des_ip);
   unsigned char *ptr = buffer;

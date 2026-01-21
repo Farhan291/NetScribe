@@ -14,6 +14,10 @@ void get_srcip(unsigned char *ip) {
   char interface[IFNAMSIZ];
   unsigned char my_mac_address[6];
   int sucesss = srcmac_addr(my_mac_address, interface);
+  if (sucesss == -1) {
+    perror("srcmac_addr()");
+    return;
+  }
   int fd;
   struct ifreq ifr = {0};
   fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -22,6 +26,7 @@ void get_srcip(unsigned char *ip) {
     return;
   }
   strncpy(ifr.ifr_name, interface, IFNAMSIZ - 1);
+  ifr.ifr_name[IFNAMSIZ - 1] = '\0';
   if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
     perror("ioctl");
     close(fd);

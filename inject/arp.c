@@ -18,6 +18,10 @@ void create_arp(unsigned char *desmac, char *target_ip) {
   char interface[IFNAMSIZ];
   unsigned char my_mac_address[6];
   int successs = srcmac_addr(my_mac_address, interface);
+  if (successs == -1) {
+    perror("srcmac_addr()");
+    return;
+  }
   get_srcip(my_ip);
   int sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
   if (sock < 0) {

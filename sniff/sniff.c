@@ -109,7 +109,7 @@ void print_arp(arp_hdr *arp) {
   printf("     Target IP: %s\n", inet_ntoa(tpa_addr));
 }
 
-char *ip4_parse(char *buff, ip4_hdr *ip, char *ptr) {
+char *ip4_parse(ip4_hdr *ip, char *ptr) {
   memcpy(&ip->ver_ihl, ptr, 1);
   ++ptr;
   memcpy(&ip->service, ptr, 1);

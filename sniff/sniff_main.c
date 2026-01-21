@@ -70,7 +70,7 @@ int sniff_main(int argc, char **argv) {
 
     switch (check_ip) {
     case IP_V4: {
-      ptr = ip4_parse(buffer, &ip4, ptr);
+      ptr = ip4_parse(&ip4, ptr);
       int ip_total_len = ntohs(ip4.length);
       int ip_hdr_len = (ip4.ver_ihl & 0x0F) * 4;
       tcp_payload_len = ip_total_len - ip_hdr_len;

@@ -10,8 +10,6 @@ int srcmac_addr(unsigned char *mac, char *interface) {
   struct ifreq ifr; /*https://man7.org/linux/man-pages/man7/netdevice.7.html*/
   struct ifconf ifc;
   char buf[1024];
-  int success = 0;
-
   int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
   if (sock == -1) {
     perror("sock()");

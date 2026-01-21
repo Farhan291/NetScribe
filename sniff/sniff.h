@@ -69,7 +69,7 @@ void print_ip6(ip6_hdr *ip6);
 char *etherparse(char *buff, ether *ethernetheader);
 void print_ether(ether *eth);
 
-char *ip4_parse(char *buff, ip4_hdr *ip, char *ptr);
+char *ip4_parse(ip4_hdr *ip, char *ptr);
 void print_ip4addr(unsigned char *ip);
 void print_ip4(ip4_hdr *iph);
 
