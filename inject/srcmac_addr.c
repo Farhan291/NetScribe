@@ -43,7 +43,6 @@ int srcmac_addr(unsigned char *mac, char *interface) {
       continue;
 
     strcpy(interface, ifr.ifr_name);
-    printf("interface: %s\n", interface);
     // kernel fills ifr_hwaddr with mac address based on interface name
     if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
       memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
