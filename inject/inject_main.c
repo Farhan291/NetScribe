@@ -1,6 +1,7 @@
 #include "arp.h"
 #include "eth.h"
 #include "fileio.h"
+#include "icmp.h"
 #include "ip.h"
 #include "udp.h"
 #include <arpa/inet.h>
@@ -14,6 +15,7 @@
 #define IP_FLAG (1 << 2)
 #define PAYLOAD_FLAG (1 << 3)
 #define UDP_FLAG (1 << 4)
+#define ICMP_FLAG (1 << 5)
 
 uint16_t g_ethertype = 0x88B5;
 char *g_payload_file = NULL;
@@ -24,7 +26,7 @@ int layer_flag = 0;
 int payload_flag;
 int inject_main(int argc, char **argv) {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "aeius:d:t:p:")) != -1) {
+  while ((opt = getopt(argc, argv, "aeiucs:d:t:p:")) != -1) {
     switch (opt) {
     case 'e':
       layer_flag |= ETH_FLAG;
@@ -37,6 +39,9 @@ int inject_main(int argc, char **argv) {
       break;
     case 'u':
       layer_flag |= UDP_FLAG;
+      break;
+    case 'c':
+      layer_flag |= ICMP_FLAG;
       break;
     case 's':
       src_port = atoi(optarg);
@@ -138,6 +143,15 @@ int inject_main(int argc, char **argv) {
 
     if (file_payload)
       free(file_payload);
+  }
+  // inject ICMP
+  if (layer_flag & ICMP_FLAG) {
+    if (optind >= argc) {
+      printf("Usage: netscribe -c  <dest-ip> \n");
+      return 1;
+    }
+    char *dst_ip = argv[optind];
+    create_icmp(dst_ip);
   }
 
   return 0;
